@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI文章搬运工具 - 今日头条AI赛道</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <style>
+        /* API配置页面样式 */
+        .provider-group {
+            margin-bottom: 2rem;
+        }
+
+        .group-header h4 {
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        .provider-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e3e6f0;
+        }
+
+        .provider-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .provider-card .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 0.75rem 1rem;
+        }
+
+        .provider-info .metric {
+            padding: 0.5rem 0;
+        }
+
+        .provider-info .metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #5a5c69;
+        }
+
+        .provider-info .metric-label {
+            font-size: 0.75rem;
+            color: #858796;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .provider-details .detail-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .provider-details .detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .provider-card .card-footer {
+            background-color: #f8f9fc;
+            border-top: 1px solid #e3e6f0;
+            padding: 0.75rem 1rem;
+        }
+
+        .provider-card .btn-group .btn {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h4><i class="fas fa-robot me-2"></i>AI文章搬运工具</h4>
+                <small class="text-muted">今日头条AI赛道专用</small>
+            </div>
+
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-tab="dashboard">
+                        <i class="fas fa-tachometer-alt me-2"></i>仪表板
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="articles">
+                        <i class="fas fa-newspaper me-2"></i>文章管理
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="prompts">
+                        <i class="fas fa-magic me-2"></i>提示词管理
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="api-config">
+                        <i class="fas fa-cogs me-2"></i>API配置
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="processing-config">
+                        <i class="fas fa-route me-2"></i>处理配置
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="detection">
+                        <i class="fas fa-search me-2"></i>检测服务
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="publish">
+                        <i class="fas fa-share-alt me-2"></i>发布管理
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="settings">
+                        <i class="fas fa-sliders-h me-2"></i>系统设置
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content" id="dashboard-content">
+                <div class="page-header">
+                    <h2><i class="fas fa-tachometer-alt me-2"></i>仪表板</h2>
+                    <div class="page-actions">
+                        <button class="btn btn-outline-primary btn-sm" data-action="refresh">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="app.testProcessing()">
+                            <i class="fas fa-play me-1"></i>测试处理
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card metric-card text-white bg-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">今日处理</h6>
+                                        <h3 id="today-count">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-calendar-day fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card text-white bg-success">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">成功率</h6>
+                                        <h3 id="success-rate">0%</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card text-white bg-warning">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">队列任务</h6>
+                                        <h3 id="queue-count">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card text-white bg-info">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">AI检测率</h6>
+                                        <h3 id="ai-detection-rate">0%</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-robot fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions and Status -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card search-card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-search me-2"></i>智能文章搜索</h5>
+                                <small class="text-muted">从全球优质平台发现AI相关文章</small>
+                            </div>
+                            <div class="card-body">
+                                <form id="search-form">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">
+                                                <i class="fas fa-filter me-1"></i>搜索模式
+                                            </label>
+                                            <select class="form-select" id="search-mode">
+                                                <option value="keyword">🔍 关键词搜索</option>
+                                                <option value="category">📂 分类浏览</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">
+                                                <i class="fas fa-globe me-1"></i>来源平台
+                                            </label>
+                                            <select class="form-select" id="platform">
+                                                <option value="medium">📝 Medium</option>
+                                                <option value="dev.to">💻 Dev.to</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3" id="keywords-input">
+                                        <label class="form-label">
+                                            <i class="fas fa-tags me-1"></i>关键词
+                                        </label>
+                                        <input type="text" class="form-control" id="keywords"
+                                               placeholder="例如: AI, machine learning, deep learning, neural networks">
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            用逗号分隔多个关键词，系统会智能匹配相关文章
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3" id="category-input" style="display: none;">
+                                        <label class="form-label">
+                                            <i class="fas fa-folder me-1"></i>分类
+                                        </label>
+                                        <select class="form-select" id="category">
+                                            <option value="">请选择分类...</option>
+                                            <!-- 分类选项将通过JavaScript动态加载 -->
+                                        </select>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            选择您感兴趣的文章分类，系统将搜索该分类下的最新文章
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3 mt-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label">
+                                                <i class="fas fa-list-ol me-1"></i>文章数量
+                                            </label>
+                                            <select class="form-select" id="limit">
+                                                <option value="5">5篇文章</option>
+                                                <option value="10" selected>10篇文章</option>
+                                                <option value="20">20篇文章</option>
+                                                <option value="50">50篇文章</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                                <i class="fas fa-rocket me-2"></i>开始搜索
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card status-card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-heartbeat me-2"></i>系统状态</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>API服务</span>
+                                        <span class="badge bg-success" id="api-status">正常</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>数据库</span>
+                                        <span class="badge bg-success" id="db-status">正常</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>浏览器</span>
+                                        <span class="badge bg-success" id="browser-status">就绪</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted">当前任务进度</small>
+                                    <div class="progress mt-1">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%" id="current-progress">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-list me-2"></i>搜索结果</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="search-results">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-search fa-3x mb-3 opacity-50"></i>
+                                        <p>请使用上方搜索功能查找文章</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Articles Tab -->
+            <div class="tab-content" id="articles-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-newspaper me-2"></i>文章管理</h2>
+                    <div class="page-actions">
+                        <button class="btn btn-outline-primary btn-sm" onclick="app.refreshCurrentTab()">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-3 text-muted">正在加载文章列表...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompts Tab -->
+            <div class="tab-content" id="prompts-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-magic me-2"></i>提示词管理</h2>
+                    <div class="page-actions">
+                        <button class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>新建提示词
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <i class="fas fa-magic fa-3x mb-3 text-muted opacity-50"></i>
+                            <p class="text-muted">提示词管理功能开发中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Config Tab -->
+            <div class="tab-content" id="api-config-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-cogs me-2"></i>API配置</h2>
+                    <div class="page-actions">
+                        <button class="btn btn-outline-primary btn-sm" onclick="app.refreshCurrentTab()">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-3 text-muted">正在加载API配置...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Config Tab -->
+            <div class="tab-content" id="processing-config-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-route me-2"></i>处理配置</h2>
+                    <div class="page-actions">
+                        <button class="btn btn-outline-primary btn-sm" onclick="app.loadProcessingRules()">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="app.showTestClassificationModal()">
+                            <i class="fas fa-flask me-1"></i>测试分类
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="app.showClassificationAccuracyReport()">
+                            <i class="fas fa-chart-line me-1"></i>准确率报告
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="app.showAIClassificationTest()">
+                            <i class="fas fa-robot me-1"></i>AI智能分类测试
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Processing Rules Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>处理规则管理
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="processing-rules-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2 text-muted">正在加载处理规则...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classification Rules Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tags me-2"></i>分类规则管理
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="classification-rules-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2 text-muted">正在加载分类规则...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Statistics Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>处理统计
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary">0</h4>
+                                    <small class="text-muted">技术类文章</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-success">0</h4>
+                                    <small class="text-muted">教程类文章</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-warning">0</h4>
+                                    <small class="text-muted">新闻类文章</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-info">0</h4>
+                                    <small class="text-muted">通用文章</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detection Tab -->
+            <div class="tab-content" id="detection-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-search me-2"></i>检测服务</h2>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted">检测服务功能开发中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Publish Tab -->
+            <div class="tab-content" id="publish-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-share-alt me-2"></i>发布管理</h2>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted">发布管理功能开发中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings-content" style="display: none;">
+                <div class="page-header">
+                    <h2><i class="fas fa-sliders-h me-2"></i>系统设置</h2>
+                </div>
+
+                <!-- AI优化配置 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI优化配置</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="ai-optimization-config-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="maxAttempts" class="form-label">最大尝试次数</label>
+                                        <input type="number" class="form-control" id="maxAttempts" min="1" max="20" value="5">
+                                        <div class="form-text">AI优化的最大尝试次数（1-20次）</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="aiThreshold" class="form-label">AI浓度阈值 (%)</label>
+                                        <input type="number" class="form-control" id="aiThreshold" min="0" max="100" step="0.1" value="25.0">
+                                        <div class="form-text">AI检测通过的阈值（0-100%）</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="retryDelay" class="form-label">重试间隔 (秒)</label>
+                                        <input type="number" class="form-control" id="retryDelay" min="0" max="60" value="2">
+                                        <div class="form-text">每次重试之间的等待时间（0-60秒）</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="enableProgressiveOptimization" checked>
+                                            <label class="form-check-label" for="enableProgressiveOptimization">
+                                                启用渐进式优化
+                                            </label>
+                                        </div>
+                                        <div class="form-text">根据尝试次数逐步加强优化强度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="app.saveAIOptimizationConfig()">
+                                    <i class="fas fa-save me-1"></i>保存配置
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="app.loadAIOptimizationConfig()">
+                                    <i class="fas fa-sync-alt me-1"></i>重新加载
+                                </button>
+                                <button type="button" class="btn btn-outline-info" onclick="app.resetAIOptimizationConfig()">
+                                    <i class="fas fa-undo me-1"></i>恢复默认
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 其他系统设置 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-cog me-2"></i>其他设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">更多系统设置功能开发中...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="modal fade" id="processingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cog fa-spin me-2"></i>
+                        处理中...
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%" id="progress-bar"></div>
+                    </div>
+                    <div id="processing-status">正在初始化...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="modal fade" id="processingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cog fa-spin me-2"></i>
+                        文章处理中...
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>处理进度</span>
+                            <span id="processing-percentage">0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                 role="progressbar" style="width: 0%" id="processing-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>当前步骤</h6>
+                        <div id="processing-current-step" class="text-muted">正在初始化...</div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>处理日志</h6>
+                        <div class="border rounded p-3" style="height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+                            <div id="processing-log" class="font-monospace small">
+                                <div class="text-muted">等待开始处理...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-danger" id="stop-processing" style="display: none;">
+                        <i class="fas fa-stop me-1"></i>停止处理
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Article Modal -->
+    <div class="modal fade" id="addArticleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus me-2"></i>
+                        添加新文章
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-article-form">
+                        <div class="mb-3">
+                            <label for="article-url-input" class="form-label">文章URL</label>
+                            <input type="url" class="form-control" id="article-url-input"
+                                   placeholder="https://medium.com/@author/article-title" required>
+                            <div class="form-text">支持Medium、Dev.to等平台的文章链接</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="source-platform-select" class="form-label">来源平台</label>
+                            <select class="form-select" id="source-platform-select">
+                                <option value="medium">Medium</option>
+                                <option value="dev.to">Dev.to</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auto-process-check">
+                                <label class="form-check-label" for="auto-process-check">
+                                    自动开始处理
+                                </label>
+                                <div class="form-text">勾选后将自动进行翻译、检测和优化</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="app.submitAddArticle()">
+                        <i class="fas fa-plus me-1"></i>添加文章
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Provider Modal -->
+    <div class="modal fade" id="addProviderModal" tabindex="-1" aria-labelledby="addProviderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProviderModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>添加API Provider
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 快速选择模板 -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-magic me-2"></i>快速选择模板
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <button type="button" class="btn btn-outline-primary w-100" onclick="app.useProviderTemplate('openai')">
+                                    <i class="fab fa-openai me-2"></i>OpenAI
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <button type="button" class="btn btn-outline-primary w-100" onclick="app.useProviderTemplate('claude')">
+                                    <i class="fas fa-robot me-2"></i>Claude
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <button type="button" class="btn btn-outline-primary w-100" onclick="app.useProviderTemplate('gemini')">
+                                    <i class="fab fa-google me-2"></i>Gemini
+                                </button>
+                            </div>
+                        </div>
+                        <hr>
+                    </div>
+
+                    <form id="addProviderForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="providerName" class="form-label">Provider名称 *</label>
+                                    <input type="text" class="form-control" id="providerName" required>
+                                    <div class="form-text">唯一标识符，如：openai-gpt4</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="providerDisplayName" class="form-label">显示名称 *</label>
+                                    <input type="text" class="form-control" id="providerDisplayName" required>
+                                    <div class="form-text">用户友好的名称，如：OpenAI GPT-4</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="providerType" class="form-label">Provider类型 *</label>
+                                    <select class="form-select" id="providerType" required>
+                                        <option value="">请选择类型</option>
+                                        <option value="ai">AI服务</option>
+                                        <option value="detection">检测服务</option>
+                                        <option value="publish">发布服务</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="providerApiUrl" class="form-label">API URL *</label>
+                                    <input type="url" class="form-control" id="providerApiUrl" required>
+                                    <div class="form-text">如：https://api.openai.com/v1</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="providerApiKey" class="form-label">API Key *</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="providerApiKey" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">您的API密钥将被安全加密存储</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="providerDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="providerDescription" rows="2"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="providerWeight" class="form-label">权重</label>
+                                    <input type="number" class="form-control" id="providerWeight" value="1" min="1" max="100">
+                                    <div class="form-text">负载均衡权重</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="providerRpmLimit" class="form-label">每分钟请求限制</label>
+                                    <input type="number" class="form-control" id="providerRpmLimit" value="60" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="providerRphLimit" class="form-label">每小时请求限制</label>
+                                    <input type="number" class="form-control" id="providerRphLimit" value="1000" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="providerIsEnabled" checked>
+                                    <label class="form-check-label" for="providerIsEnabled">
+                                        启用此Provider
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="providerIsDefault">
+                                    <label class="form-check-label" for="providerIsDefault">
+                                        设为默认Provider
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="app.submitAddProvider()">
+                        <i class="fas fa-save me-1"></i>保存Provider
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Provider Modal -->
+    <div class="modal fade" id="editProviderModal" tabindex="-1" aria-labelledby="editProviderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProviderModalLabel">
+                        <i class="fas fa-edit me-2"></i>编辑API Provider
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Provider统计信息 -->
+                    <div class="alert alert-info mb-3" id="editProviderStats">
+                        <h6 class="alert-heading"><i class="fas fa-chart-line me-2"></i>Provider统计信息</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>成功率:</strong> <span id="editStatsSuccessRate">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>总请求:</strong> <span id="editStatsTotalRequests">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>失败请求:</strong> <span id="editStatsFailedRequests">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>平均响应时间:</strong> <span id="editStatsResponseTime">-</span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <strong>当前使用:</strong> $<span id="editStatsCurrentUsage">-</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>月度预算:</strong> $<span id="editStatsMonthlyBudget">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="editProviderForm">
+                        <input type="hidden" id="editProviderId">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProviderName" class="form-label">Provider名称 *</label>
+                                    <input type="text" class="form-control" id="editProviderName" required readonly>
+                                    <div class="form-text">Provider名称不可修改</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProviderDisplayName" class="form-label">显示名称 *</label>
+                                    <input type="text" class="form-control" id="editProviderDisplayName" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProviderType" class="form-label">Provider类型 *</label>
+                                    <select class="form-select" id="editProviderType" required disabled>
+                                        <option value="ai">AI服务</option>
+                                        <option value="detection">检测服务</option>
+                                        <option value="publish">发布服务</option>
+                                    </select>
+                                    <div class="form-text">Provider类型不可修改</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProviderApiUrl" class="form-label">API URL *</label>
+                                    <div class="input-group">
+                                        <input type="url" class="form-control" id="editProviderApiUrl" required
+                                               placeholder="http://localhost:8000/v1/chat/completions">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="app.validateApiUrl()">
+                                            <i class="fas fa-check"></i> 验证
+                                        </button>
+                                        <button class="btn btn-outline-warning" type="button" onclick="app.resetApiUrl()">
+                                            <i class="fas fa-undo"></i> 重置
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        推荐使用: http://localhost:8000/v1/chat/completions<br>
+                                        <small class="text-success">✅ 使用本地API服务地址</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editProviderApiKey" class="form-label">API Key</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="editProviderApiKey" placeholder="留空则不修改API Key">
+                                <button class="btn btn-outline-secondary" type="button" id="editToggleApiKey">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">留空则保持当前API Key不变</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editProviderDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="editProviderDescription" rows="2"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editProviderWeight" class="form-label">权重</label>
+                                    <input type="number" class="form-control" id="editProviderWeight" min="1" max="100">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editProviderRpmLimit" class="form-label">每分钟请求限制</label>
+                                    <input type="number" class="form-control" id="editProviderRpmLimit" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="editProviderRphLimit" class="form-label">每小时请求限制</label>
+                                    <input type="number" class="form-control" id="editProviderRphLimit" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProviderInputCost" class="form-label">输入成本 (每1K tokens)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="editProviderInputCost" step="0.001" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editProviderOutputCost" class="form-label">输出成本 (每1K tokens)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="editProviderOutputCost" step="0.001" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editProviderBudget" class="form-label">月度预算</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="editProviderBudget" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editProviderIsEnabled">
+                                    <label class="form-check-label" for="editProviderIsEnabled">
+                                        启用此Provider
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editProviderIsDefault">
+                                    <label class="form-check-label" for="editProviderIsDefault">
+                                        设为默认Provider
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="app.submitEditProvider()">
+                        <i class="fas fa-save me-1"></i>保存修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 🚀 应用初始化脚本
+        (function() {
+            console.log('🚀 页面初始化...');
+
+            // 基本的页面初始化逻辑
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('✅ DOM加载完成');
+            });
+
+            console.log('✅ 页面初始化完成');
+        })();
+    </script>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        // 调试编辑功能
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 页面加载完成，开始调试编辑功能...');
+
+            // 检查app对象是否存在
+            setTimeout(() => {
+                if (window.app) {
+                    console.log('✅ app对象已创建');
+
+                    // 检查编辑相关方法是否存在
+                    if (typeof window.app.editProvider === 'function') {
+                        console.log('✅ editProvider方法存在');
+                    } else {
+                        console.error('❌ editProvider方法不存在');
+                    }
+
+                    if (typeof window.app.submitEditProvider === 'function') {
+                        console.log('✅ submitEditProvider方法存在');
+                    } else {
+                        console.error('❌ submitEditProvider方法不存在');
+                    }
+
+                    // 检查模态框元素
+                    const modalElement = document.getElementById('editProviderModal');
+                    if (modalElement) {
+                        console.log('✅ 编辑模态框元素存在');
+                    } else {
+                        console.error('❌ 编辑模态框元素不存在');
+                    }
+
+                    // 检查Bootstrap
+                    if (typeof bootstrap !== 'undefined') {
+                        console.log('✅ Bootstrap已加载');
+                    } else {
+                        console.error('❌ Bootstrap未加载');
+                    }
+
+                } else {
+                    console.error('❌ app对象未创建');
+                }
+            }, 1000);
+        });
+
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            console.error('🚨 JavaScript错误:', e.error);
+        });
+
+        // 测试编辑功能的全局函数
+        window.testEditFunction = function() {
+            console.log('🧪 测试编辑功能...');
+            if (window.app && typeof window.app.editProvider === 'function') {
+                try {
+                    window.app.editProvider(1);
+                    console.log('✅ 编辑功能调用成功');
+                } catch (error) {
+                    console.error('❌ 编辑功能调用失败:', error);
+                }
+            } else {
+                console.error('❌ 编辑功能不可用');
+            }
+        };
+    </script>
+</body>
+</html>
